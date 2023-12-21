@@ -1,0 +1,4 @@
+docker build -t ning2516085027/developer-crawler:latest .
+docker push ning2516085027/developer-crawler:latest
+docker pull ning2516085027/developer-crawler:latest
+docker run -d --name developer_crawler -p 8000:8000 ning2516085027/developer-crawler:latest

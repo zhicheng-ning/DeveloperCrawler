@@ -5,6 +5,7 @@
 # @PROJECT_NAME: DeveloperRelationCrawler
 # @Software: PyCharm
 import datetime
+from itertools import islice
 
 import requests
 import time
@@ -120,6 +121,14 @@ def log_to_file(log_file, message):
     with open(log_file, 'a', encoding='utf-8') as file:
         file.write(message + '\n')
 
+def batch(iterable, size):
+    """将迭代器分成大小固定的批次"""
+    it = iter(iterable)
+    while True:
+        chunk = tuple(islice(it, size))
+        if not chunk:
+            return
+        yield chunk
 
 if __name__ == '__main__':
     tokens = [
@@ -130,12 +139,11 @@ if __name__ == '__main__':
 
     thread_count = 20
 
-    with ThreadPoolExecutor(max_workers=thread_count) as executor:
-        futures = []
-        for user_id in range(1082300, 90000000):
-            future = executor.submit(run, user_id, tokens, user_id % len(tokens), log_file_path)
-            futures.append(future)
+    batch_size = 1000  # 可以根据需要调整批次大小
 
-        for future in as_completed(futures):
-            result = future.result()
-            # print(result)  # 如果有返回结果，这里可以进行处理
+    with ThreadPoolExecutor(max_workers=thread_count) as executor:
+        for batch_of_user_ids in batch(range(1082300, 90000000), batch_size):
+            futures = [executor.submit(run, user_id, tokens, user_id % len(tokens), log_file_path) for user_id in
+                       batch_of_user_ids]
+            for future in as_completed(futures):
+                result = future.result()
